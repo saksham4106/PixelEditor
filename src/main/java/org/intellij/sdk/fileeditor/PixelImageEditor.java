@@ -48,7 +48,7 @@ public class PixelImageEditor implements FileEditor, DataProvider {
 
     @Override
     public boolean isModified() {
-        return true;
+        return virtualFile.exists();
     }
 
 

@@ -7,12 +7,13 @@
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>PixelEditor</name>
 
-    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor url="https://saksham.com">Company</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
-    <description>hello this is description of my plugin he</description>
+    <description>A simple and intuitive color editing tool window for IntelliJ-based IDEs.
+        This plugin allows users to edit individual pixels directly from the IDE. Ideal for developers working with simple and small
+        images.</description>
+    <vendor>io.github.saksham4106.com</vendor>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->

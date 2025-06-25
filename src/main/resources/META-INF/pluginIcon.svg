@@ -1,12 +1,20 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M32.0845 7.94025V4H24.0203V7.9896H16.029V4H7.91553V7.94025H4V36H16.0044V32.0045C16.0058 30.9457 16.4274 29.9308 17.1766 29.1826C17.9258 28.4345 18.9412 28.0143 20 28.0143C21.0588 28.0143 22.0743 28.4345 22.8234 29.1826C23.5726 29.9308 23.9942 30.9457 23.9956 32.0045V36H36V7.94025H32.0845Z"
-          fill="url(#paint0_linear)"/>
-    <defs>
-        <linearGradient id="paint0_linear" x1="2.94192" y1="4.89955" x2="37.7772" y2="39.7345"
-                        gradientUnits="userSpaceOnUse">
-            <stop offset="0.15937" stop-color="#3BEA62"/>
-            <stop offset="0.5404" stop-color="#3C99CC"/>
-            <stop offset="0.93739" stop-color="#6B57FF"/>
-        </linearGradient>
-    </defs>
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="32" height="32" fill="#2A2F3A"/>
+    <!-- Simplified pixel grid -->
+    <rect x="9" y="9" width="14" height="14" fill="#F5F5F5"/>
+    <path d="M9 11H23V12H9V11ZM9 13H23V14H9V13ZM9 15H23V16H9V15ZM9 17H23V18H9V17ZM9 19H23V20H9V19ZM9 21H23V22H9V21Z" fill="#CCCCCC" fill-opacity="0.5"/>
+    <path d="M11 9V23H12V9H11ZM13 9V23H14V9H13ZM15 9V23H16V9H15ZM17 9V23H18V9H17ZM19 9V23H20V9H19ZM21 9V23H22V9H21Z" fill="#CCCCCC" fill-opacity="0.5"/>
+    <!-- Colorful pixels -->
+    <rect x="11" y="11" width="2" height="2" fill="#FF5555"/>
+    <rect x="15" y="15" width="2" height="2" fill="#55FF55"/>
+    <rect x="19" y="11" width="2" height="2" fill="#5555FF"/>
+    <rect x="13" y="19" width="2" height="2" fill="#FFFF55"/>
+    <!-- Pencil -->
+    <path d="M4 28H6V26H8V24H10V22H12V20H14V18H12V20H10V22H8V24H6V26H4V28ZM4 26H6V24H8V22H10V20H12V18H14V16H16V14H14V16H12V18H10V20H8V22H6V24H4V26Z" fill="#FF88CC"/>
+    <!-- Subtle colorful border -->
+    <rect x="1" y="1" width="30" height="1" fill="#FF5555" fill-opacity="0.7"/>
+    <rect x="1" y="30" width="30" height="1" fill="#55FF55" fill-opacity="0.7"/>
+    <rect x="1" y="1" width="1" height="30" fill="#5555FF" fill-opacity="0.7"/>
+    <rect x="30" y="1" width="1" height="30" fill="#FFFF55" fill-opacity="0.7"/>
 </svg>

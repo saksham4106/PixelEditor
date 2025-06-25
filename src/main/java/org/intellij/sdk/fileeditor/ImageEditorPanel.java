@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
+import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.sdk.Tool;
 import org.intellij.sdk.service.BrushSelectionService;
@@ -42,6 +43,59 @@ public class ImageEditorPanel extends JPanel implements Disposable, DataProvider
     private boolean areaSelected = false;
     private Point viewPosition = new Point(0, 0);
     private Point hoveredPixel = null;
+    public static final DataKey<ImageEditorPanel> DATA_KEY = DataKey.create("ImageEditorPanel");
+
+    public ImageEditorPanel(BufferedImage img, Project project, VirtualFile file) {
+        this.originalImage = img;
+        this.project = project;
+        this.file = file;
+
+        Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+        ImageEditorPanel panel = this;
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                ApplicationManager.getApplication().invokeLater(panel::forceSave);
+                alarm.addRequest(this, 1000); // reschedule
+            }
+        };
+
+        alarm.addRequest(task, 1000);
+
+        setImage(img);
+        setFocusable(true);
+        setOpaque(true);
+        defaultListener();
+    }
+
+    private void setImage(BufferedImage img) {
+        imageGraphic = (Graphics2D) img.getGraphics();
+        imageGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+
+        this.scaledImage = img;
+
+        this.overlay = UIUtil.createImage(scaledImage.getWidth(), scaledImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        this.overlayGraphic = (Graphics2D) this.overlay.getGraphics();
+        this.overlayGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        BrushSelectionService cs = this.project.getService(BrushSelectionService.class);
+        ToolSelectionService ts =  this.project.getService(ToolSelectionService.class);
+        this.equippedTool = ts.getEquippedTool();
+        ts.addToolChangeListener(() -> this.equippedTool = ts.getEquippedTool());
+
+        imageGraphic.setPaint(cs.getSelectedColor());
+        imageGraphic.setStroke(cs.getStroke());
+        cs.addBrushChangeListener(() -> {
+            imageGraphic.setPaint(cs.getSelectedColor());
+            imageGraphic.setStroke(cs.getStroke());
+        });
+
+        this.zoom = (float) FileEditorManagerEx.getInstanceEx(project).getSplitters().getWidth() / (2.5f * img.getWidth());
+        scheduleZoom();
+
+        repaint();
+    }
 
     @Override
     protected void paintComponent(Graphics g1) {
@@ -93,39 +147,13 @@ public class ImageEditorPanel extends JPanel implements Disposable, DataProvider
 
     }
 
-    public ImageEditorPanel(BufferedImage img, Project project, VirtualFile file) {
-        this.originalImage = img;
-        this.project = project;
-        this.file = file;
-
-        setImage(img);
-        setFocusable(true);
-        setOpaque(true);
-        defaultListener();
-
-
-        Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-        ImageEditorPanel panel = this;
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                ApplicationManager.getApplication().invokeLater(panel::forceSave);
-                alarm.addRequest(this, 5000); // reschedule
-            }
-        };
-
-        alarm.addRequest(task, 5000);
-
-
-
-    }
-
     public void showContextMenu(int x, int y){
         ActionManager am = ActionManager.getInstance();
         ActionGroup group = (ActionGroup) am.getAction("EditorPopupMenu");
         ActionPopupMenu popupMenu = am.createActionPopupMenu("CustomEditor", group);
         popupMenu.getComponent().show(this, (int)(x), (int)(y));
     }
+
     public void defaultListener() {
         setDoubleBuffered(true);
 
@@ -135,50 +163,16 @@ public class ImageEditorPanel extends JPanel implements Disposable, DataProvider
                     showContextMenu(e.getX(), e.getY());
                 }
 
-
                 ImageEditorPanel.this.requestFocusInWindow();
                 initialPoint = SwingUtilities.convertPoint((Component) e.getSource(), e.getPoint(), getParent());
-
-                if(imageGraphic != null){
-                    if(equippedTool == Tool.BRUSH_TOOL){
-                        JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, (Component) e.getSource());
-                        viewPosition = viewport.getViewPosition();
-                        drawEraseLine(imageGraphic, e, (int) (initialPoint.x / zoom) + (int)(viewPosition.x/zoom),
-                                (int) (initialPoint.y / zoom)   + (int)(viewPosition.y/zoom), (int) (initialPoint.x / zoom)
-                                        + (int)(viewPosition.x/zoom), (int) (initialPoint.y / zoom) + (int)(viewPosition.y/zoom), false);
-                        scheduleZoom();
-                    }else if(equippedTool == Tool.ERASE){
-                        JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, (Component) e.getSource());
-                        viewPosition = viewport.getViewPosition();
-                        drawEraseLine(imageGraphic, e, (int) (initialPoint.x / zoom) + (int)(viewPosition.x/zoom),
-                                (int) (initialPoint.y / zoom)   + (int)(viewPosition.y/zoom), (int) (initialPoint.x / zoom)
-                                        + (int)(viewPosition.x/zoom), (int) (initialPoint.y / zoom) + (int)(viewPosition.y/zoom), true);
-                        scheduleZoom();
-                    }else if(equippedTool == Tool.SELECTION_TOOL){
-                        JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, (Component) e.getSource());
-                        viewPosition = viewport.getViewPosition();
-                        if(selection == null){
-                            selectionInitialPoint = handleOffset(initialPoint, viewPosition);
-                        }else{
-                            if(!selection.contains(initialPoint)){
-                                selection = null;
-                                selectionInitialPoint = null;
-                                selectionFinalPoint = null;
-                                areaSelected = false;
-                                scheduleZoom();
-                            }else{
-                                areaSelected = true;
-                            }
-                        }
-                    }
-                }
+                handleTools(e);
             }
         };
 
         MouseWheelListener listener1 = e -> {
             if(e.isControlDown()){
-                zoom -= e.getWheelRotation() / 20.0f;
-                zoom = Math.max(0.05f, zoom);
+                zoom -= e.getWheelRotation() / 10.0f;
+                zoom = Math.max(0.1f, zoom);
                 scheduleZoom();
                 e.consume();
             }
@@ -193,7 +187,6 @@ public class ImageEditorPanel extends JPanel implements Disposable, DataProvider
                 if(hoveredPixel.x < 0 || hoveredPixel.x > scaledImage.getWidth() / zoom || hoveredPixel.y < 0 || hoveredPixel.y > scaledImage.getHeight() / zoom){
                     hoveredPixel = null;
                 }
-
                 scheduleZoom();
             }
 
@@ -228,40 +221,6 @@ public class ImageEditorPanel extends JPanel implements Disposable, DataProvider
                         selectionFinalPoint = handleOffset(SwingUtilities.convertPoint((Component) e.getSource(), e.getPoint(), getParent()), viewPosition);
                         scheduleZoom();
                     }
-//                    else{
-//                        viewPosition = viewport.getViewPosition();
-//                        int dx = (int)(finalPoint.x/zoom) -(int) (initialPoint.x/zoom);
-//                        int dy = (int)(finalPoint.y/zoom) -(int) (initialPoint.y/zoom);
-//
-//                        selectionInitialPoint.translate(dx, dy);
-//                        selectionFinalPoint.translate(dx, dy);
-//
-//                        int selX = (int) (selection.x / zoom + viewPosition.x / zoom) + 1;
-//                        int selY = (int) (selection.y / zoom + viewPosition.y / zoom) + 1;
-//                        int selW = (int) (selection.width / zoom);
-//                        int selH = (int) (selection.height / zoom);
-//
-//                        if(selectionimage == null){
-//                            BufferedImage copy = new BufferedImage(selW, selH, BufferedImage.TYPE_INT_ARGB);
-//                            Graphics2D gCopy = copy.createGraphics();
-//                            gCopy.drawImage(originalImage, 0, 0, selW, selH,
-//                                    selX, selY, selX + selW, selY + selH, null);
-//                            gCopy.dispose();
-//                            selectionimage = copy;
-//                        }
-//
-//
-//                        Composite temp = overlayGraphic.getComposite();
-//                        overlayGraphic.setComposite(AlphaComposite.Clear);
-//                        overlayGraphic.fillRect(selX, selY, selW, selH);
-//                        overlayGraphic.setComposite(temp);
-//
-//                        int newX = selX + dx;
-//                        int newY = selY + dy;
-////                        overlayGraphic.drawImage(copy, newX, newY, null);
-//                        overlayGraphic.drawImage(selectionimage, newX, newY, null);
-//                        scheduleZoom();
-//                    }
                 }
 
                 initialPoint.setLocation(finalPoint);
@@ -300,6 +259,33 @@ public class ImageEditorPanel extends JPanel implements Disposable, DataProvider
         addKeyListener(keyListener);
     }
 
+    private void handleTools(MouseEvent e){
+        if(imageGraphic == null) return;
+
+        JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, (Component) e.getSource());
+        viewPosition = viewport.getViewPosition();
+        if(equippedTool == Tool.BRUSH_TOOL){
+            drawEraseLine(imageGraphic, e, (int) (initialPoint.x / zoom) + (int)(viewPosition.x/zoom), (int) (initialPoint.y / zoom)   + (int)(viewPosition.y/zoom), (int) (initialPoint.x / zoom) + (int)(viewPosition.x/zoom), (int) (initialPoint.y / zoom) + (int)(viewPosition.y/zoom), false);
+            scheduleZoom();
+        }else if(equippedTool == Tool.ERASE){
+            drawEraseLine(imageGraphic, e, (int) (initialPoint.x / zoom) + (int)(viewPosition.x/zoom), (int) (initialPoint.y / zoom)   + (int)(viewPosition.y/zoom), (int) (initialPoint.x / zoom)+ (int)(viewPosition.x/zoom), (int) (initialPoint.y / zoom) + (int)(viewPosition.y/zoom), true);
+            scheduleZoom();
+        }else if(equippedTool == Tool.SELECTION_TOOL){
+            if(selection == null){
+                selectionInitialPoint = handleOffset(initialPoint, viewPosition);
+            }else{
+                if(!selection.contains(initialPoint)){
+                    selection = null;
+                    selectionInitialPoint = null;
+                    selectionFinalPoint = null;
+                    areaSelected = false;
+                    scheduleZoom();
+                }else{
+                    areaSelected = true;
+                }
+            }
+        }
+    }
     private Point handleOffset(Point point, Point viewPos){
         return new Point((int) (point.x / zoom + viewPos.x / zoom), (int) (point.y / zoom + viewPos.y / zoom));
     }
@@ -351,48 +337,6 @@ public class ImageEditorPanel extends JPanel implements Disposable, DataProvider
         }
     }
 
-    private void setImage(BufferedImage img) {
-        imageGraphic = (Graphics2D) img.getGraphics();
-        imageGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
-
-        this.scaledImage = img;
-
-        this.overlay = UIUtil.createImage(scaledImage.getWidth(), scaledImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        this.overlayGraphic = (Graphics2D) this.overlay.getGraphics();
-        this.overlayGraphic.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        BrushSelectionService cs = this.project.getService(BrushSelectionService.class);
-        ToolSelectionService ts =  this.project.getService(ToolSelectionService.class);
-        this.equippedTool = ts.getEquippedTool();
-        ts.addToolChangeListener(() -> this.equippedTool = ts.getEquippedTool());
-
-        imageGraphic.setPaint(cs.getSelectedColor());
-        imageGraphic.setStroke(cs.getStroke());
-        cs.addBrushChangeListener(() -> {
-            imageGraphic.setPaint(cs.getSelectedColor());
-            imageGraphic.setStroke(cs.getStroke());
-        });
-
-        this.zoom = (float) FileEditorManagerEx.getInstanceEx(project).getSplitters().getWidth() / (2.5f * img.getWidth());
-        scheduleZoom();
-
-        repaint();
-    }
-
-    @Override
-    public void dispose() {
-        removeAll();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-        return new Dimension(scaledImage.getWidth(), scaledImage.getHeight());
-
-    }
-
-    public static final DataKey<ImageEditorPanel> DATA_KEY = DataKey.create("ImageEditorPanel");
-
     public void forceSave() {
         ApplicationManager.getApplication().runWriteAction(() -> {
             try (OutputStream out = file.getOutputStream(this)) {
@@ -406,11 +350,21 @@ public class ImageEditorPanel extends JPanel implements Disposable, DataProvider
     }
 
     @Override
+    public void dispose() {
+        removeAll();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(scaledImage.getWidth(), scaledImage.getHeight());
+
+    }
+
+    @Override
     public @Nullable Object getData(@NotNull @NonNls String s) {
         if (ImageEditorPanel.DATA_KEY.is(s)) {
             return this;
         }
         return null;
     }
-
 }
