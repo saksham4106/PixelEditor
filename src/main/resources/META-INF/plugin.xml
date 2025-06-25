@@ -1,0 +1,46 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.saksham4106.PixelEditor</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>PixelEditor</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://saksham.com">Company</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description>hello this is description of my plugin he</description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+
+    </extensions>
+
+    <actions>
+        <action id="SaveImage"
+                class="org.intellij.sdk.action.SaveImageAction"
+                text="Save Image"
+                description="Save the currently edited image">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow factoryClass="org.intellij.sdk.toolwindow.ColorEditorWindowFactory" id="ColorEditor" anchor="right"
+                    icon="/icons/pluginIcon.svg" />
+        <fileEditorProvider implementation="org.intellij.sdk.fileeditor.ImageEditorProvider"/>
+    </extensions>
+
+    <projectListeners>
+        <listener class="org.intellij.sdk.listener.FileOpenedListener" topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" />
+    </projectListeners>
+    
+</idea-plugin>

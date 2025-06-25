@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="32" height="32" fill="#1C2526"/>
+    <!-- Colorful pixel grid -->
+    <rect x="8" y="8" width="16" height="16" fill="#FFFFFF"/>
+    <path d="M8 9H24V10H8V9ZM8 11H24V12H8V11ZM8 13H24V14H8V13ZM8 15H24V16H8V15ZM8 17H24V18H8V17ZM8 19H24V20H8V19ZM8 21H24V22H8V21ZM8 23H24V24H8V23Z" fill="#000000"/>
+    <path d="M9 8V24H10V8H9ZM11 8V24H12V8H11ZM13 8V24H14V8H13ZM15 8V24H16V8H15ZM17 8V24H18V8H17ZM19 8V24H20V8H19ZM21 8V24H22V8H21ZM23 8V24H24V8H23Z" fill="#000000"/>
+    <!-- Colorful pixels -->
+    <rect x="10" y="10" width="2" height="2" fill="#FF0000"/>
+    <rect x="14" y="14" width="2" height="2" fill="#00FF00"/>
+    <rect x="18" y="10" width="2" height="2" fill="#0000FF"/>
+    <rect x="20" y="14" width="2" height="2" fill="#FFFF00"/>
+    <!-- Pencil -->
+    <path d="M4 28H6V26H8V24H10V22H12V20H14V18H12V20H10V22H8V24H6V26H4V28ZM4 26H6V24H8V22H10V20H12V18H14V16H16V14H14V16H12V18H10V20H8V22H6V24H4V26Z" fill="#FF69B4"/>
+    <!-- Colorful border (palette-inspired) -->
+    <rect x="1" y="1" width="30" height="1" fill="#FF0000"/>
+    <rect x="1" y="30" width="30" height="1" fill="#00FF00"/>
+    <rect x="1" y="1" width="1" height="30" fill="#0000FF"/>
+    <rect x="30" y="1" width="1" height="30" fill="#FFFF00"/>
+</svg>
